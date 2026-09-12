@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>2026北疆秋日旅行计划</title>
+    <style>
+        :root {
+            --bg-color: #fdfbf7;
+            --text-color: #2c3e50;
+            --card-bg: #ffffff;
+            --accent-color: #d35400;
+            --accent-light: #f39c12;
+            --border-color: #e0e0e0;
+            --map-day1: #3498db;
+            --map-day2: #e67e22;
+            --map-day3: #9b59b6;
+            --map-day4: #27ae60;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #1a1a1a;
+                --text-color: #ecf0f1;
+                --card-bg: #2c2c2c;
+                --accent-color: #e67e22;
+                --accent-light: #f1c40f;
+                --border-color: #444;
+            }
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 15px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        
+        /* 顶部倒计时 */
+        .hero-card {
+            background: linear-gradient(135deg, var(--accent-color), var(--accent-light));
+            color: white;
+            padding: 25px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .hero-card h1 { font-size: 1.4rem; margin-bottom: 10px; font-weight: 600; }
+        .countdown-container { display: flex; justify-content: center; gap: 15px; margin-top: 15px; }
+        .countdown-box {
+            background: rgba(255,255,255,0.2);
+            padding: 10px 15px;
+            border-radius: 10px;
+            min-width: 65px;
+        }
+        .countdown-box span { display: block; font-size: 1.8rem; font-weight: bold; }
+        .countdown-box small { font-size: 0.8rem; opacity: 0.9; }
+
+        /* 通用卡片 */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--accent-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* 地图 SVG */
+        .map-container { position: relative; width: 100%; height: 0; padding-bottom: 75%; overflow: hidden; }
+        .map-container svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .map-node { cursor: pointer; transition: transform 0.2s; }
+        .map-node:hover { transform: scale(1.1); }
+        .map-text { font-size: 12px; font-weight: bold; fill: var(--text-color); pointer-events: none; text-anchor: middle; }
+        .map-label { font-size: 10px; fill: #666; pointer-events: none; text-anchor: middle; }
+        
+        /* 信息列表 */
+        .info-row { display: flex; margin-bottom: 10px; font-size: 0.95rem; }
+        .info-label { width: 80px; color: #888; flex-shrink: 0; }
+        .info-value { font-weight: 500; }
+        .info-value a { color: var(--accent-color); text-decoration: none; }
+        
+        /* 逐日行程时间轴 */
+        .day-block { margin-bottom: 25px; }
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 5px solid var(--accent-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            cursor: pointer;
+        }
+        .day-header h3 { font-size: 1.1rem; }
+        .day-header .toggle-icon { font-size: 1.2rem; transition: transform 0.3s; }
+        .day-header.active .toggle-icon { transform: rotate(180deg); }
+        
+        .timeline { position: relative; padding-left: 20px; display: none; }
+        .timeline.show { display: block; }
+        .timeline::before {
+            content: ''; position: absolute; left: 6px; top: 0; bottom: 0;
+            width: 2px; background-color: var(--border-color);
+        }
+        .timeline-item { position: relative; margin-bottom: 15px; }
+        .timeline-item::before {
+            content: ''; position: absolute; left: -18px; top: 6px;
+            width: 10px; height: 10px; border-radius: 50%;
+            background-color: var(--accent-color);
+        }
+        .timeline-time { font-size: 0.85rem; color: var(--accent-color); font-weight: bold; }
+        .timeline-content { font-size: 0.95rem; }
+        .timeline-content a { color: var(--accent-color); text-decoration: none; }
+
+        /* 待办清单 */
+        .todo-list { list-style: none; }
+        .todo-list li { padding: 10px 0; border-bottom: 1px dashed var(--border-color); display: flex; align-items: flex-start; gap: 10px; }
+        .todo-list li::before { content: '☐'; font-size: 1.2rem; color: var(--accent-color); }
+
+        /* 实用贴士 */
+        .tips-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .tips-item h4 { font-size: 1rem; margin-bottom: 5px; color: var(--accent-color); }
+        .tips-item ul { list-style: none; font-size: 0.9rem; }
+        .tips-item ul li { margin-bottom: 3px; }
+        .tips-item ul li::before { content: '•'; color: var(--accent-color); margin-right: 5px; }
+
+        @media (max-width: 600px) {
+            .tips-grid { grid-template-columns: 1fr; }
+            .countdown-box span { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- 顶部倒计时 -->
+    <div class="hero-card">
+        <h1>🍂 2026北疆秋日旅行计划</h1>
+        <p>3人 · 4天3夜 · 阿勒泰/禾木/喀纳斯/白哈巴</p>
+        <div class="countdown-container" id="countdown">
+            <div class="countdown-box"><span id="days">--</span><small>天</small></div>
+            <div class="countdown-box"><span id="hours">--</span><small>时</small></div>
+            <div class="countdown-box"><span id="minutes">--</span><small>分</small></div>
+            <div class="countdown-box"><span id="seconds">--</span><small>秒</small></div>
+        </div>
+    </div>
+
+    <!-- 行程总览地图 -->
+    <div class="card">
+        <div class="section-title">🗺️ 行程总览图</div>
+        <div class="map-container">
+            <svg viewBox="0 0 800 600">
+                <!-- 路线 Day1 蓝 -->
+                <path d="M 100 500 Q 200 350 300 200" fill="none" stroke="var(--map-day1)" stroke-width="4" stroke-dasharray="8 4" stroke-linecap="round"/>
+                <!-- 路线 Day2 橙 -->
+                <path d="M 300 200 Q 400 250 500 300" fill="none" stroke="var(--map-day2)" stroke-width="4" stroke-dasharray="8 4" stroke-linecap="round"/>
+                <!-- 路线 Day3 紫 -->
+                <path d="M 500 300 Q 580 350 650 400" fill="none" stroke="var(--map-day3)" stroke-width="4" stroke-dasharray="8 4" stroke-linecap="round"/>
+                <!-- 路线 Day4 绿 -->
+                <path d="M 650 400 Q 400 550 150 520" fill="none" stroke="var(--map-day4)" stroke-width="4" stroke-dasharray="8 4" stroke-linecap="round"/>
+
+                <!-- 节点 -->
+                <circle class="map-node" cx="100" cy="500" r="12" fill="var(--map-day1)" onclick="window.open('https://www.google.com/maps/search/?api=1&query=阿勒泰雪都机场')"/>
+                <text class="map-text" x="100" y="530">阿勒泰机场</text>
+
+                <circle class="map-node" cx="300" cy="200" r="12" fill="var(--map-day1)" onclick="window.open('https://www.google.com/maps/search/?api=1&query=禾木游客服务中心')"/>
+                <text class="map-text" x="300" y="185">禾木</text>
+                <text class="map-label" x="300" y="230">住：清境山房</text>
+
+                <circle class="map-node" cx="500" cy="300" r="12" fill="var(--map-day2)" onclick="window.open('https://www.google.com/maps/search/?api=1&query=喀纳斯游客服务中心')"/>
+                <text class="map-text" x="500" y="285">喀纳斯</text>
+                <text class="map-label" x="500" y="330">住：火狐狸山舍</text>
+
+                <circle class="map-node" cx="650" cy="400" r="12" fill="var(--map-day3)" onclick="window.open('https://www.google.com/maps/search/?api=1&query=白哈巴村')"/>
+                <text class="map-text" x="650" y="385">白哈巴</text>
+                <text class="map-label" x="650" y="430">住：崇野集</text>
+            </svg>
+        </div>
+    </div>
+
+    <!-- 已确认信息 -->
+    <div class="card">
+        <div class="section-title">✅ 已确认信息</div>
+        
+        <div style="margin-bottom: 15px;">
+            <h4 style="color: var(--accent-color); margin-bottom: 8px;">✈️ 航班</h4>
+            <div class="info-row"><span class="info-label">去程</span><span class="info-value">9.23 MU6673 上海浦东T1 07:45 - 阿勒泰 13:30</span></div>
+            <div class="info-row"><span class="info-label">去程中转</span><span class="info-value">9.23 GJ8081 银川 10:15 - 阿勒泰 13:55</span></div>
+            <div class="info-row"><span class="info-label">返程</span><span class="info-value">9.26 MU6206 阿勒泰 15:00 - 上海虹桥T2 20:00</span></div>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <h4 style="color: var(--accent-color); margin-bottom: 8px;">🏨 住宿</h4>
+            <div class="info-row"><span class="info-label">9.23</span><span class="info-value">禾木清境山房（禾木桥店）<br><small>电话：13921633344</small></span></div>
+            <div class="info-row"><span class="info-label">9.24</span><span class="info-value">Adherent·火狐狸山舍（喀纳斯店）</span></div>
+            <div class="info-row"><span class="info-label">9.25</span><span class="info-value">崇野集·山缦·Yeelen（白哈巴店）</span></div>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <h4 style="color: var(--accent-color); margin-bottom: 8px;">🚗 车辆</h4>
+            <div class="info-row"><span class="info-label">9.23 接机</span><span class="info-value">马海莲 15809068883（新HDX001）</span></div>
+            <div class="info-row"><span class="info-label">9.24 包车</span><span class="info-value">新HH8U56 蓝色 13579197677<br>14:00 禾木游客中心 → 贾登峪游客中心</span></div>
+            <div class="info-row"><span class="info-label">9.25 区间车</span><span class="info-value">喀纳斯 → 白哈巴，最晚18:00</span></div>
+        </div>
+
+        <div>
+            <h4 style="color: var(--accent-color); margin-bottom: 8px;">🎫 门票（已出票）</h4>
+            <div class="info-row"><span class="info-label">9.23</span><span class="info-value">禾木景区（门+车）¥75x3</span></div>
+            <div class="info-row"><span class="info-label">9.24</span><span class="info-value">喀纳斯一日进（门+车）¥230x3</span></div>
+            <div class="info-row"><span class="info-label">9.25</span><span class="info-value">白哈巴景区（门+车）¥225x3</span></div>
+        </div>
+    </div>
+
+    <!-- 逐日行程 -->
+    <div class="card">
+        <div class="section-title">📅 逐日行程</div>
+
+        <div class="day-block">
+            <div class="day-header" onclick="toggleDay('day1')">
+                <h3>Day1 · 9月23日 · 抵达禾木</h3>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="timeline show" id="day1">
+                <div class="timeline-item">
+                    <div class="timeline-time">13:30 - 14:30</div>
+                    <div class="timeline-content">抵达阿勒泰机场，司机接机（马海莲，新HDX001）。<br><small>提示：阿勒泰机场很小，一刻钟出来足够。</small></div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">14:30 - 18:00</div>
+                    <div class="timeline-content">阿勒泰机场 → <a href="https://www.google.com/maps/search/?api=1&query=禾木村" target="_blank">禾木</a>（车程较长，备好U型枕）。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">18:00 - 20:00</div>
+                    <div class="timeline-content">入住 <b>禾木清境山房</b>。如果时间允许，简单逛禾木村、白桦林。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">20:00 之后</div>
+                    <div class="timeline-content">晚餐（建议在禾木村解决），晚上看星空（禾木观星极佳），早点休息。</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="day-block">
+            <div class="day-header" onclick="toggleDay('day2')">
+                <h3>Day2 · 9月24日 · 禾木 → 喀纳斯</h3>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="timeline show" id="day2">
+                <div class="timeline-item">
+                    <div class="timeline-time">上午</div>
+                    <div class="timeline-content">禾木村内自由游玩，整理行李。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">14:00</div>
+                    <div class="timeline-content">禾木游客服务中心 → 贾登峪游客服务中心（车次 hm-jdy1，新HH8U56）。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">16:00 - 16:30</div>
+                    <div class="timeline-content">贾登峪坐区间车（1h）到达喀纳斯游客服务中心。<br><b>方案A</b>：免费寄存行李，直接去观鱼台/湖边。<br><b>方案B</b>：联系民宿老板接送，先入住休息吃饭。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">17:00 - 20:00</div>
+                    <div class="timeline-content">视体力情况：前往<a href="https://www.google.com/maps/search/?api=1&query=观鱼台" target="_blank">观鱼台</a>（俯瞰全景，需爬台阶）或<a href="https://www.google.com/maps/search/?api=1&query=喀纳斯湖" target="_blank">喀纳斯湖边</a>散步看夕阳。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">20:00 之后</div>
+                    <div class="timeline-content">入住 <b>Adherent·火狐狸山舍</b>，晚餐休息。</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="day-block">
+            <div class="day-header" onclick="toggleDay('day3')">
+                <h3>Day3 · 9月25日 · 喀纳斯 → 白哈巴</h3>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="timeline show" id="day3">
+                <div class="timeline-item">
+                    <div class="timeline-time">早晨</div>
+                    <div class="timeline-content">喀纳斯游玩三湾（神仙湾看薄雾，卧龙湾最美）。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">下午</div>
+                    <div class="timeline-content">喀纳斯 → 白哈巴（景区区间车，最晚18:00，建议17:00上车，坐左边看美景，1h到达）。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">17:00 - 20:00</div>
+                    <div class="timeline-content">抵达白哈巴，可骑马（240元/人）上山，空中草原看日落，下山吃饭。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">20:00 之后</div>
+                    <div class="timeline-content">入住 <b>崇野集·山缦·Yeelen</b>，休息。</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="day-block">
+            <div class="day-header" onclick="toggleDay('day4')">
+                <h3>Day4 · 9月26日 · 返程</h3>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="timeline show" id="day4">
+                <div class="timeline-item">
+                    <div class="timeline-time">08:30</div>
+                    <div class="timeline-content">自然醒，看日出晨雾（秋季晨雾概率高，村子游客少）。去揽景站拍照，村里找角落坐下欣赏。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">12:00 前</div>
+                    <div class="timeline-content">退房，乘车前往阿勒泰机场。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">13:30</div>
+                    <div class="timeline-content">抵达阿勒泰机场（机场小，安检快，起飞前1.5小时即可）。</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-time">15:00</div>
+                    <div class="timeline-content">MU6206 起飞，返回上海虹桥T2。</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 待办清单 -->
+    <div class="card">
+        <div class="section-title">📝 待办清单（办完告知我，我改页面）</div>
+        <ul class="todo-list">
+            <li>9月24日喀纳斯下午：选择方案A（直接玩）还是方案B（先入住休息）？</li>
+            <li>确认喀纳斯民宿老板接送服务。</li>
+            <li>确认最终车辆安排。</li>
+            <li>确认每天具体吃饭地点。</li>
+        </ul>
+    </div>
+
+    <!-- 实用贴士 -->
+    <div class="card">
+        <div class="section-title">🧳 实用贴士（9月底北疆）</div>
+        <div class="tips-grid">
+            <div class="tips-item">
+                <h4>🌡️ 温度特点</h4>
+                <ul>
+                    <li>早晚冷，山区风大</li>
+                    <li>白天太阳强，紫外线强</li>
+                    <li>喀纳斯/白哈巴接近冬季体感</li>
+                </ul>
+            </div>
+            <div class="tips-item">
+                <h4>🧥 三层穿衣法</h4>
+                <ul>
+                    <li>内层：短袖/速干衣</li>
+                    <li>中层：羊毛衫/抓绒衣</li>
+                    <li>外层：冲锋衣 + 薄羽绒服</li>
+                </ul>
+            </div>
+            <div class="tips-item">
+                <h4>🎒 必带配件</h4>
+                <ul>
+                    <li>帽子、墨镜、手套、围巾</li>
+                    <li>防晒霜、润唇膏、面霜</li>
+                    <li>防水徒步鞋、厚袜子</li>
+                </ul>
+            </div>
+            <div class="tips-item">
+                <h4>💊 常备药</h4>
+                <ul>
+                    <li>感冒药、肠胃药</li>
+                    <li>创可贴、晕车药</li>
+                    <li>止痛药、过敏药</li>
+                </ul>
+            </div>
+            <div class="tips-item">
+                <h4>🍫 零食建议</h4>
+                <ul>
+                    <li>牛肉干、巧克力</li>
+                    <li>饼干、坚果、泡面</li>
+                    <li>保温杯（随时喝热水）</li>
+                </ul>
+            </div>
+            <div class="tips-item">
+                <h4>📱 生活用品</h4>
+                <ul>
+                    <li>身份证、充电宝、充电器</li>
+                    <li>纸巾、湿巾、洗漱用品</li>
+                    <li>U型枕（长途车推荐）</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. 倒计时逻辑
+    const targetDate = new Date("2026-09-23T07:45:00+08:00").getTime();
+    function updateCountdown() {
+        const now = new Date().getTime();
+        const distance = targetDate - now;
+        if (distance < 0) {
+            document.getElementById("countdown").innerHTML = "<h3>旅程已开始！祝旅途愉快！</h3>";
+            return;
+        }
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        document.getElementById("days").innerText = days;
+        document.getElementById("hours").innerText = hours.toString().padStart(2, '0');
+        document.getElementById("minutes").innerText = minutes.toString().padStart(2, '0');
+        document.getElementById("seconds").innerText = seconds.toString().padStart(2, '0');
+    }
+    setInterval(updateCountdown, 1000);
+    updateCountdown();
+
+    // 2. 折叠展开逻辑
+    function toggleDay(dayId) {
+        const timeline = document.getElementById(dayId);
+        const header = timeline.previousElementSibling;
+        if (timeline.classList.contains('show')) {
+            timeline.classList.remove('show');
+            header.classList.remove('active');
+        } else {
+            timeline.classList.add('show');
+            header.classList.add('active');
+        }
+    }
+
+    // 3. 日夜模式自动切换（除了 CSS media query，再用 JS 补充晚上的判断）
+    const hour = new Date().getHours();
+    if (hour >= 18 || hour < 6) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+    }
+</script>
+</body>
+</html>
